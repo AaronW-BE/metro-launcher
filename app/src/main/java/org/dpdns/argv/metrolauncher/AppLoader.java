@@ -32,6 +32,10 @@ public class AppLoader {
             app.name = ri.loadLabel(pm).toString();
             app.icon = ri.loadIcon(pm);
             app.packageName = ri.activityInfo.packageName;
+            app.componentName = new android.content.ComponentName(
+                    ri.activityInfo.packageName,
+                    ri.activityInfo.name
+            );
             appInfos.add(app);
         }
 

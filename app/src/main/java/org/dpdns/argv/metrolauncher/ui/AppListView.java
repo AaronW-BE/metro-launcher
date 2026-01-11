@@ -103,7 +103,7 @@ public class AppListView extends FrameLayout {
     }
 
     private void pinToStart(AppInfo app) {
-
+        if (app == null || app.componentName == null) return;
         ComponentName cn = app.componentName;
 
         List<PinnedTile> tiles = TileStorage.load(getContext());

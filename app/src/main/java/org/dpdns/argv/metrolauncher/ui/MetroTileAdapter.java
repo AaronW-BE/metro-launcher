@@ -33,10 +33,29 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
         return tiles.get(position).id;
     }
 
+    @Override
+    public int getItemViewType(int position) {
+        TileItem item = tiles.get(position);
+        String pkg = item.component.getPackageName().toLowerCase();
+        if (pkg.contains("calendar")) return 1;
+        if (pkg.contains("photo") || pkg.contains("gallery")) return 2;
+        if (pkg.contains("clock") || pkg.contains("alarm")) return 3;
+        return 0;
+    }
+
     @NonNull
     @Override
     public TileViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
-        TileView view = new TileView(context);
+        TileView view;
+        if (viewType == 1) {
+            view = new CalendarTileView(context);
+        } else if (viewType == 2) {
+            view = new PhotoTileView(context);
+        } else if (viewType == 3) {
+            view = new ClockTileView(context);
+        } else {
+            view = new TileView(context);
+        }
 
         MetroTileLayoutParams lp = new MetroTileLayoutParams(
                 ViewGroup.LayoutParams.WRAP_CONTENT,
@@ -57,6 +76,33 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
 
         lp.spanX = item.spanX;
         lp.spanY = item.spanY;
+    }
+
+    public void moveItem(int from, int to) {
+        TileItem item = tiles.remove(from);
+        tiles.add(to, item);
+        notifyItemMoved(from, to);
+        saveToStorage();
+    }
+
+    public void removeItem(int position) {
+        if (position >= 0 && position < tiles.size()) {
+            tiles.remove(position);
+            notifyItemRemoved(position);
+            saveToStorage();
+        }
+    }
+
+    private void saveToStorage() {
+        List<org.dpdns.argv.metrolauncher.model.PinnedTile> pinned = new ArrayList<>();
+        for (TileItem item : tiles) {
+            org.dpdns.argv.metrolauncher.model.PinnedTile t = new org.dpdns.argv.metrolauncher.model.PinnedTile();
+            t.packageName = item.component.getPackageName();
+            t.className = item.component.getClassName();
+            t.label = item.title;
+            pinned.add(t);
+        }
+        org.dpdns.argv.metrolauncher.model.TileStorage.save(context, pinned);
     }
 
     @Override

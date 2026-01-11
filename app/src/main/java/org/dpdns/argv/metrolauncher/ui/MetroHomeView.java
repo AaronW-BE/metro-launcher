@@ -40,7 +40,7 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
         recyclerView.setOverScrollMode(OVER_SCROLL_NEVER);
 
         MetroTileLayoutManager layoutManager =
-                new MetroTileLayoutManager(context, 4); // 4 列（WP 标准）
+                new MetroTileLayoutManager(context, 6); // 6 列（WP8.1/10 高密度布局）
 
         recyclerView.setLayoutManager(layoutManager);
 
@@ -48,20 +48,68 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
         recyclerView.setAdapter(adapter);
 
         // 关键：纵向滚动时，禁止父容器抢事件
-        recyclerView.setOnTouchListener((v, event) -> {
-            if (event.getAction() == MotionEvent.ACTION_MOVE) {
-                v.getParent().requestDisallowInterceptTouchEvent(true);
-            }
-            return false;
-        });
+        // Fix: Removed requestDisallowInterceptTouchEvent to allow horizontal swipe on blank areas
+        // recyclerView.setOnTouchListener((v, event) -> {
+        //     if (event.getAction() == MotionEvent.ACTION_MOVE) {
+        //         v.getParent().requestDisallowInterceptTouchEvent(true);
+        //     }
+        //     return false;
+        // });
 
         addView(recyclerView, new LayoutParams(
                 LayoutParams.MATCH_PARENT,
                 LayoutParams.MATCH_PARENT
         ));
 
-//        List<PinnedTile> tiles = TileStorage.load(context);
-//        adapter.setTiles(tiles);
+        // Drag and Drop (ItemTouchHelper)
+        androidx.recyclerview.widget.ItemTouchHelper.Callback callback = 
+            new androidx.recyclerview.widget.ItemTouchHelper.SimpleCallback(
+                androidx.recyclerview.widget.ItemTouchHelper.UP | 
+                androidx.recyclerview.widget.ItemTouchHelper.DOWN | 
+                androidx.recyclerview.widget.ItemTouchHelper.LEFT | 
+                androidx.recyclerview.widget.ItemTouchHelper.RIGHT, 0) {
+            
+            @Override
+            public boolean onMove(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder, @NonNull RecyclerView.ViewHolder target) {
+                adapter.moveItem(viewHolder.getAdapterPosition(), target.getAdapterPosition());
+                return true;
+            }
+
+            @Override
+            public void onSwiped(@NonNull RecyclerView.ViewHolder viewHolder, int direction) {
+                // Not used
+            }
+
+            @Override
+            public void onSelectedChanged(@Nullable RecyclerView.ViewHolder viewHolder, int actionState) {
+                super.onSelectedChanged(viewHolder, actionState);
+                if (actionState == androidx.recyclerview.widget.ItemTouchHelper.ACTION_STATE_DRAG) {
+                    if (viewHolder != null) {
+                        viewHolder.itemView.setAlpha(0.8f);
+                        viewHolder.itemView.setScaleX(1.1f);
+                        viewHolder.itemView.setScaleY(1.1f);
+                    }
+                }
+            }
+
+            @Override
+            public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
+                super.clearView(recyclerView, viewHolder);
+                viewHolder.itemView.setAlpha(1.0f);
+                viewHolder.itemView.setScaleX(1.0f);
+                viewHolder.itemView.setScaleY(1.0f);
+            }
+        };
+
+        new androidx.recyclerview.widget.ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
+
+        List<PinnedTile> saved = TileStorage.load(context);
+        List<TileItem> items = new java.util.ArrayList<>();
+        long idCounter = 0;
+        for (PinnedTile t : saved) {
+            items.add(TileItem.fromPinned(context, t, idCounter++));
+        }
+        adapter.setTiles(items);
 
         TileChangeBus.register(this);
     }
@@ -70,8 +118,78 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
         adapter.setTiles(tiles);
     }
 
+    public void performTurnExit(final Runnable onComplete) {
+        int childCount = recyclerView.getChildCount();
+        if (childCount == 0) {
+            if (onComplete != null) onComplete.run();
+            return;
+        }
+
+        // Find max coordinates to calculate delays (bottom-right is 0, top-left is max)
+        int maxTop = 0;
+        int maxLeft = 0;
+        for (int i = 0; i < childCount; i++) {
+            android.view.View child = recyclerView.getChildAt(i);
+            if (child.getTop() > maxTop) maxTop = child.getTop();
+            if (child.getLeft() > maxLeft) maxLeft = child.getLeft();
+        }
+
+        long lastAnimationStartTime = 0;
+        for (int i = 0; i < childCount; i++) {
+            final android.view.View child = recyclerView.getChildAt(i);
+            
+            // Calculate delay: further from bottom-right = more delay
+            // Using a factor for better "sweep" speed
+            long delay = (long) ((maxTop - child.getTop() + maxLeft - child.getLeft()) * 0.15f);
+            if (delay > lastAnimationStartTime) lastAnimationStartTime = delay;
+
+            child.setPivotX(child.getWidth());
+            child.setPivotY(child.getHeight() / 2f);
+            child.setCameraDistance(5000 * getResources().getDisplayMetrics().density);
+
+            child.animate()
+                .rotationY(-90f)
+                .scaleX(0.7f)
+                .scaleY(0.7f)
+                .alpha(0f)
+                .setStartDelay(delay)
+                .setDuration(400)
+                .setInterpolator(new android.view.animation.AccelerateInterpolator())
+                .start();
+        }
+
+        // Call onComplete after a safe duration (max delay + animation duration)
+        postDelayed(() -> {
+            if (onComplete != null) onComplete.run();
+            
+            // Reset state for when we return
+            postDelayed(() -> {
+                for (int i = 0; i < recyclerView.getChildCount(); i++) {
+                    android.view.View child = recyclerView.getChildAt(i);
+                    child.setRotationY(0f);
+                    child.setScaleX(1.0f);
+                    child.setScaleY(1.0f);
+                    child.setAlpha(1.0f);
+                }
+            }, 500);
+        }, lastAnimationStartTime + 200); // 200ms overlap for better feel
+    }
+
+    @Override
+    protected void onDetachedFromWindow() {
+        super.onDetachedFromWindow();
+        org.dpdns.argv.metrolauncher.TileChangeBus.unregister(this);
+    }
+
     @Override
     public void onTilesChanged() {
-
+        android.view.ContextThemeWrapper context = (android.view.ContextThemeWrapper) getContext();
+        List<PinnedTile> saved = TileStorage.load(context);
+        List<TileItem> items = new java.util.ArrayList<>();
+        long idCounter = 0;
+        for (PinnedTile t : saved) {
+            items.add(TileItem.fromPinned(context, t, idCounter++));
+        }
+        setTiles(items);
     }
 }

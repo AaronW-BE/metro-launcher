@@ -85,11 +85,12 @@ public class MetroTileLayoutManager extends RecyclerView.LayoutManager {
             int row = pos[1];
 
             markOccupied(occupancy, col, row, spanX, spanY);
+            if (row + spanY > maxRowUsed) maxRowUsed = row + spanY;
 
-            int left = col * cellSize;
-            int top = row * cellSize;
-            int right = left + spanX * cellSize;
-            int bottom = top + spanY * cellSize;
+            int left = col * cellSize + 8;
+            int top = row * cellSize + 8;
+            int right = left + spanX * cellSize - 16;  // 8 padding on each side effective
+            int bottom = top + spanY * cellSize - 16;
 
             Rect rect = new Rect(left, top, right, bottom);
             itemRects.put(i, rect);

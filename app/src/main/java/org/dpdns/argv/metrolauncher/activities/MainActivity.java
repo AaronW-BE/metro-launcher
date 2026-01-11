@@ -33,11 +33,11 @@ public class MainActivity extends AppCompatActivity {
 
         getWindow().setDecorFitsSystemWindows(false);
 
-//        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
-//            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
-//            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
-//            return insets;
-//        });
+        ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
+            Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
+            v.setPadding(systemBars.left, systemBars.top, systemBars.right, systemBars.bottom);
+            return insets;
+        });
 
         metroBackCallback = new OnBackPressedCallback(true) {
             @Override
@@ -47,6 +47,46 @@ public class MainActivity extends AppCompatActivity {
         };
 
         getOnBackPressedDispatcher().addCallback(this, metroBackCallback);
+        
+        checkPermissions();
+    }
+    
+    private void checkPermissions() {
+        // 1. Check Usage Stats (for High-Frequency Apps)
+        if (!org.dpdns.argv.metrolauncher.UsageHelper.hasUsageStatsPermission(this)) {
+            new android.app.AlertDialog.Builder(this)
+                .setTitle("Permission Required")
+                .setMessage("MetroLauncher needs 'Usage Access' usage to identify your most frequently used apps and display them on the start screen.")
+                .setPositiveButton("Grant", (d, w) -> {
+                    startActivity(new android.content.Intent(android.provider.Settings.ACTION_USAGE_ACCESS_SETTINGS));
+                })
+                .setNegativeButton("Cancel", null)
+                .show();
+        }
+
+        // 2. Check Runtime Permissions (for Live Tiles)
+        java.util.List<String> needed = new java.util.ArrayList<>();
+        
+        if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_CALENDAR) 
+                != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+            needed.add(android.Manifest.permission.READ_CALENDAR);
+        }
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+             if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_MEDIA_IMAGES) 
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.READ_MEDIA_IMAGES);
+            }
+        } else {
+             if (androidx.core.content.ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) 
+                    != android.content.pm.PackageManager.PERMISSION_GRANTED) {
+                needed.add(android.Manifest.permission.READ_EXTERNAL_STORAGE);
+            }
+        }
+        
+        if (!needed.isEmpty()) {
+            androidx.core.app.ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), 100);
+        }
     }
 
     private void handleBackLogic() {

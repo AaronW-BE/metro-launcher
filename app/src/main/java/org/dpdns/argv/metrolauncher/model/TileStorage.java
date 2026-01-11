@@ -36,6 +36,10 @@ public class TileStorage {
         String json = c.getSharedPreferences(PREF, Context.MODE_PRIVATE)
                 .getString(KEY, "[]");
 
+        if ("[]".equals(json)) {
+            return DefaultTilesProvider.getDefaults(c);
+        }
+
         List<PinnedTile> result = new ArrayList<>();
 
         try {
