@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".activities.MainActivity">
+
+    <org.dpdns.argv.metrolauncher.ui.MetroRootLayout
+        android:id="@+id/metroRoot"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!-- 第 0 个 child：桌面 -->
+        <org.dpdns.argv.metrolauncher.ui.MetroHomeView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+        <!-- 第 1 个 child：应用列表 -->
+        <org.dpdns.argv.metrolauncher.ui.AppListView
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </org.dpdns.argv.metrolauncher.ui.MetroRootLayout>
+</androidx.constraintlayout.widget.ConstraintLayout>
