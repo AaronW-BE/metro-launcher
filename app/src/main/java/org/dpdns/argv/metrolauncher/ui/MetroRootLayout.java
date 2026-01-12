@@ -31,6 +31,16 @@ public class MetroRootLayout extends ViewGroup {
     private int minFlingVelocity;
 
     private ValueAnimator settleAnimator;
+    private OnScrollListener scrollListener;
+
+    public interface OnScrollListener {
+        void onScroll(float offset, float maxOffset);
+        void onStateChanged(int newState);
+    }
+
+    public void setOnScrollListener(OnScrollListener listener) {
+        this.scrollListener = listener;
+    }
 
     public MetroRootLayout(@NonNull Context context) {
         this(context, null);
@@ -131,6 +141,10 @@ public class MetroRootLayout extends ViewGroup {
                     offsetX = -getWidth() + (offsetX + getWidth()) * 0.35f;
                 }
 
+                if (scrollListener != null) {
+                    scrollListener.onScroll(offsetX, -getWidth());
+                }
+
                 requestLayout();
                 break;
 
@@ -171,6 +185,10 @@ public class MetroRootLayout extends ViewGroup {
             }
         }
 
+        if (scrollListener != null) {
+            scrollListener.onStateChanged(currentState);
+        }
+
         animateTo(target);
     }
 
@@ -184,6 +202,9 @@ public class MetroRootLayout extends ViewGroup {
         settleAnimator.setInterpolator(new DecelerateInterpolator());
         settleAnimator.addUpdateListener(animation -> {
             offsetX = (float) animation.getAnimatedValue();
+            if (scrollListener != null) {
+                scrollListener.onScroll(offsetX, -getWidth());
+            }
             requestLayout();
         });
         settleAnimator.start();

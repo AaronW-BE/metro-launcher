@@ -43,6 +43,7 @@ public class CalendarTileView extends LiveTileView {
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setGravity(Gravity.CENTER);
+        layout.setBackgroundColor(0xFF00AFF0); // Metro Blue
         layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
         
         dayText = new TextView(getContext());
@@ -69,6 +70,7 @@ public class CalendarTileView extends LiveTileView {
         LinearLayout layout = new LinearLayout(getContext());
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(24, 24, 24, 24);
+        layout.setBackgroundColor(0xFF00AFF0); // Metro Blue
         layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
 
         eventTitle = new TextView(getContext());
@@ -93,8 +95,10 @@ public class CalendarTileView extends LiveTileView {
     }
 
     @Override
-    public void bind(TileItem item) {
-        super.bind(item);
+    public void bind(TileItem item, boolean isEditMode) {
+        super.bind(item, isEditMode);
+        initViews(); // Vital for Live Tiles
+        if (frontView != null) frontView.setVisibility(VISIBLE);
         // Calendar tile is typically Metro Blue
         setBackgroundColor(0xFF00AFF0); 
         updateDate();

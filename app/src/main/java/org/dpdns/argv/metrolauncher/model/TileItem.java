@@ -51,26 +51,43 @@ public class TileItem {
 
         String pkg = pinned.packageName.toLowerCase();
         
-        if (pkg.contains("clock") || pkg.contains("alarm")) {
-            // Clock/Calendar/Photos might still want to be "Medium" (2x2) as defaults
-            spanX = 2;
+        if (pkg.contains("calendar") || pkg.contains("photo") || pkg.contains("gallery") ||
+                   pkg.contains("google.android.apps.photos")) {
+            // Force special apps to be Large (4x2)
+            spanX = 4;
             spanY = 2;
-            type = TYPE_MEDIUM;
-        } else if (pkg.contains("calendar") || pkg.contains("photos") || pkg.contains("gallery")) {
-            // Keep system live tiles as Medium (2x2)
-            spanX = 2;
-            spanY = 2;
-            type = TYPE_MEDIUM;
-        } else if (id % 15 == 0) {
-            // Occasional Large tile for variety
             type = TYPE_LARGE;
-            spanX = 6; 
-            spanY = 2;
-        } else if (id % 6 == 0) {
-            // Occasional Medium tile
-            type = TYPE_MEDIUM;
+        } else if (pkg.contains("clock") || pkg.contains("alarm")) {
             spanX = 2;
             spanY = 2;
+            type = TYPE_MEDIUM;
+        }
+        
+        // Final fallback for id-based variations if not already set to something special
+        if (type == TYPE_SMALL) {
+            if (id % 15 == 0) {
+                // Occasional Large tile for variety
+                type = TYPE_LARGE;
+                spanX = 4;
+                spanY = 2;
+            } else if (id % 4 == 0) {
+                // Occasional Medium tile
+                type = TYPE_MEDIUM;
+                spanX = 2;
+                spanY = 2;
+            }
+        }
+
+        // Overwrite with saved spans if available
+        if (pinned.spanX > 0 && pinned.spanY > 0) {
+            spanX = pinned.spanX;
+            spanY = pinned.spanY;
+            
+            // Map back to type for internal logic (simplified)
+            if (spanX == 1) type = TYPE_SMALL;
+            else if (spanX == 2 && spanY == 1) type = TYPE_WIDE;
+            else if (spanX == 4) type = TYPE_LARGE;
+            else type = TYPE_MEDIUM;
         }
 
         return new TileItem(

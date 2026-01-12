@@ -21,6 +21,8 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
 
     private RecyclerView recyclerView;
     private MetroTileAdapter adapter;
+    private androidx.recyclerview.widget.ItemTouchHelper itemTouchHelper;
+    private boolean isEditMode = false;
 
     public MetroHomeView(@NonNull Context context) {
         this(context, null);
@@ -93,6 +95,11 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
             }
 
             @Override
+            public boolean isLongPressDragEnabled() {
+                return false; // We trigger it manually from TileView
+            }
+
+            @Override
             public void clearView(@NonNull RecyclerView recyclerView, @NonNull RecyclerView.ViewHolder viewHolder) {
                 super.clearView(recyclerView, viewHolder);
                 viewHolder.itemView.setAlpha(1.0f);
@@ -101,7 +108,8 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
             }
         };
 
-        new androidx.recyclerview.widget.ItemTouchHelper(callback).attachToRecyclerView(recyclerView);
+        itemTouchHelper = new androidx.recyclerview.widget.ItemTouchHelper(callback);
+        itemTouchHelper.attachToRecyclerView(recyclerView);
 
         List<PinnedTile> saved = TileStorage.load(context);
         List<TileItem> items = new java.util.ArrayList<>();
@@ -112,6 +120,27 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
         adapter.setTiles(items);
 
         TileChangeBus.register(this);
+
+        // Tap empty area to exit edit mode
+        setOnClickListener(v -> setEditMode(false));
+    }
+
+    public void setEditMode(boolean editMode) {
+        if (this.isEditMode == editMode) return;
+        this.isEditMode = editMode;
+        if (adapter != null) {
+            adapter.setEditMode(editMode);
+        }
+    }
+
+    public boolean isEditMode() {
+        return isEditMode;
+    }
+
+    public void startDrag(RecyclerView.ViewHolder holder) {
+        if (itemTouchHelper != null) {
+            itemTouchHelper.startDrag(holder);
+        }
     }
 
     public void setTiles(java.util.List<TileItem> tiles) {

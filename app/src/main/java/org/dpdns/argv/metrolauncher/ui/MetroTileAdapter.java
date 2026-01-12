@@ -16,6 +16,7 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
 
     private final Context context;
     private final List<TileItem> tiles = new ArrayList<>();
+    private boolean isEditMode = false;
 
     public MetroTileAdapter(Context context) {
         this.context = context;
@@ -25,6 +26,11 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
     public void setTiles(List<TileItem> list) {
         tiles.clear();
         tiles.addAll(list);
+        notifyDataSetChanged();
+    }
+
+    public void setEditMode(boolean isEditMode) {
+        this.isEditMode = isEditMode;
         notifyDataSetChanged();
     }
 
@@ -38,7 +44,9 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
         TileItem item = tiles.get(position);
         String pkg = item.component.getPackageName().toLowerCase();
         if (pkg.contains("calendar")) return 1;
-        if (pkg.contains("photo") || pkg.contains("gallery")) return 2;
+        if (pkg.contains("photo") || pkg.contains("gallery") || pkg.contains("image") || 
+            pkg.contains("com.miui.gallery") || pkg.contains("com.sec.android.gallery3d") ||
+            pkg.contains("google.android.apps.photos")) return 2;
         if (pkg.contains("clock") || pkg.contains("alarm")) return 3;
         return 0;
     }
@@ -69,7 +77,7 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
     @Override
     public void onBindViewHolder(@NonNull TileViewHolder holder, int position) {
         TileItem item = tiles.get(position);
-        holder.bind(item);
+        holder.bind(item, isEditMode);
 
         MetroTileLayoutParams lp =
                 (MetroTileLayoutParams) holder.itemView.getLayoutParams();
@@ -93,13 +101,15 @@ public class MetroTileAdapter extends RecyclerView.Adapter<TileViewHolder> {
         }
     }
 
-    private void saveToStorage() {
+    public void saveToStorage() {
         List<org.dpdns.argv.metrolauncher.model.PinnedTile> pinned = new ArrayList<>();
         for (TileItem item : tiles) {
             org.dpdns.argv.metrolauncher.model.PinnedTile t = new org.dpdns.argv.metrolauncher.model.PinnedTile();
             t.packageName = item.component.getPackageName();
             t.className = item.component.getClassName();
             t.label = item.title;
+            t.spanX = item.spanX;
+            t.spanY = item.spanY;
             pinned.add(t);
         }
         org.dpdns.argv.metrolauncher.model.TileStorage.save(context, pinned);

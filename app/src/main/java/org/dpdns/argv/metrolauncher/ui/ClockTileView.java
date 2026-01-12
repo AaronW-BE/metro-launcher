@@ -15,6 +15,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Locale;
 
+import org.dpdns.argv.metrolauncher.model.TileItem;
+
 public class ClockTileView extends LiveTileView {
 
     private TextView timeText;
@@ -98,6 +100,19 @@ public class ClockTileView extends LiveTileView {
         } catch (Exception ignored) {}
     }
 
+    @Override
+    public void bind(TileItem item, boolean isEditMode) {
+        super.bind(item, isEditMode);
+        initViews();
+        
+        // Hide default icon and title as we render our own clock face
+        if (iconView != null) iconView.setVisibility(GONE);
+        if (titleView != null) titleView.setVisibility(GONE);
+        
+        // Ensure binding updates immediately
+        updateTime();
+    }
+    
     private void updateTime() {
         if (timeText != null) {
             Date now = new Date();

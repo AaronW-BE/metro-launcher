@@ -22,6 +22,8 @@ public class TileStorage {
                 o.put("pkg", t.packageName);
                 o.put("cls", t.className);
                 o.put("label", t.label);
+                o.put("sx", t.spanX);
+                o.put("sy", t.spanY);
                 arr.put(o);
             }
         } catch (JSONException ignored) {}
@@ -51,6 +53,8 @@ public class TileStorage {
                 t.packageName = o.getString("pkg");
                 t.className = o.getString("cls");
                 t.label = o.getString("label");
+                t.spanX = o.optInt("sx", 0);
+                t.spanY = o.optInt("sy", 0);
 
                 result.add(t);
             }

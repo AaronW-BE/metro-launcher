@@ -10,7 +10,7 @@ public class TileViewHolder extends RecyclerView.ViewHolder {
         super(itemView);
     }
 
-    public void bind(TileItem item) {
-        ((TileView) itemView).bind(item);
+    public void bind(TileItem item, boolean isEditMode) {
+        ((TileView) itemView).bind(item, isEditMode);
     }
 }

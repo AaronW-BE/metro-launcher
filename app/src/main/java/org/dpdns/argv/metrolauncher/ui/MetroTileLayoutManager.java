@@ -72,13 +72,17 @@ public class MetroTileLayoutManager extends RecyclerView.LayoutManager {
 
             View view = recycler.getViewForPosition(i);
             addView(view);
-            measureChildWithMargins(view, 0, 0);
-
+            
             MetroTileLayoutParams lp =
                     (MetroTileLayoutParams) view.getLayoutParams();
 
             int spanX = lp.spanX;
             int spanY = lp.spanY;
+
+            // Strict measurement based on grid
+            int widthSpec = View.MeasureSpec.makeMeasureSpec(spanX * cellSize, View.MeasureSpec.EXACTLY);
+            int heightSpec = View.MeasureSpec.makeMeasureSpec(spanY * cellSize, View.MeasureSpec.EXACTLY);
+            view.measure(widthSpec, heightSpec);
 
             int[] pos = findPosition(occupancy, spanX, spanY);
             int col = pos[0];
@@ -161,7 +165,11 @@ public class MetroTileLayoutManager extends RecyclerView.LayoutManager {
                     view = recycler.getViewForPosition(i);
                     addView(view);
 
-                    measureChildWithMargins(view, 0, 0);
+                    MetroTileLayoutParams lp = (MetroTileLayoutParams) view.getLayoutParams();
+                    int widthSpec = View.MeasureSpec.makeMeasureSpec(lp.spanX * cellSize, View.MeasureSpec.EXACTLY);
+                    int heightSpec = View.MeasureSpec.makeMeasureSpec(lp.spanY * cellSize, View.MeasureSpec.EXACTLY);
+                    view.measure(widthSpec, heightSpec);
+
                     layoutDecorated(
                             view,
                             rect.left,

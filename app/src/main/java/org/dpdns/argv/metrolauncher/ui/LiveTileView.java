@@ -51,17 +51,30 @@ public abstract class LiveTileView extends TileView {
     // Call this inside bind()
     protected void initViews() {
         if (frontView == null) {
-            removeAllViews(); // Remove default title if any specific view replaces it
+            // NOTE: We no longer removeAllViews here because it strips the default icon/title
+            // that subclasses might want to keep as fallback until "Live" data is ready.
             
             frontView = createFrontView();
             backView = createBackView();
 
-            if (frontView != null) addView(frontView);
+            if (frontView != null) {
+                if (frontView.getLayoutParams() == null) {
+                    frontView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+                }
+                frontView.setVisibility(GONE); // VITAL: Don't obscure fallback icon until ready
+                if (contentContainer != null) contentContainer.addView(frontView);
+                else addView(frontView);
+            }
             if (backView != null) {
-                addView(backView);
-                backView.setAlpha(0f); // Initially hidden
-                backView.setRotationX(-90f); // Prepare for flip
+                if (backView.getLayoutParams() == null) {
+                    backView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+                }
+                if (contentContainer != null) contentContainer.addView(backView);
+                else addView(backView);
+                
+                backView.setAlpha(0f);
                 backView.setVisibility(GONE);
+                backView.setRotationX(-90f);
             }
         }
     }
