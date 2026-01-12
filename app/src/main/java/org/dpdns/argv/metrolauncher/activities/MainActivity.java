@@ -26,6 +26,8 @@ public class MainActivity extends AppCompatActivity {
 
     private LauncherState currentState = LauncherState.TILES;
 
+    private org.dpdns.argv.metrolauncher.ui.MetroRootLayout metroRootLayout;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -52,9 +54,9 @@ public class MainActivity extends AppCompatActivity {
         
         checkPermissions();
         
-        org.dpdns.argv.metrolauncher.ui.MetroRootLayout root = findViewById(R.id.metroRoot);
-        if (root != null) {
-            root.setOnScrollListener(new org.dpdns.argv.metrolauncher.ui.MetroRootLayout.OnScrollListener() {
+        metroRootLayout = findViewById(R.id.metroRoot);
+        if (metroRootLayout != null) {
+            metroRootLayout.setOnScrollListener(new org.dpdns.argv.metrolauncher.ui.MetroRootLayout.OnScrollListener() {
                 @Override
                 public void onScroll(float offset, float maxOffset) {
                     // offset is [0, -width], 0 is home, -width is app list.
@@ -70,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
                     
                     try {
                         android.app.WallpaperManager wm = android.app.WallpaperManager.getInstance(MainActivity.this);
-                        wm.setWallpaperOffsets(root.getWindowToken(), wallpaperOffset, 0.5f);
+                        wm.setWallpaperOffsets(metroRootLayout.getWindowToken(), wallpaperOffset, 0.5f);
                     } catch (Exception e) {
                         // ignore
                     }
@@ -79,7 +81,7 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void onStateChanged(int newState) {
                     currentState = newState == 0 ? LauncherState.TILES : LauncherState.ALL_APPS;
-                    handleBackLogic(); // Optional optimization
+                    // handleBackLogic(); // Optional optimization
                 }
             });
         }
@@ -130,14 +132,24 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void handleBackLogic() {
-        switch (currentState) {
-            case ALL_APPS:
-                break;
-            case EDIT_MODE:
-                break;
-            case TILES:
-                break;
+        if (metroRootLayout == null) return;
+
+        // 1. If in App List, go back to Home
+        if (metroRootLayout.isShowingAppList()) {
+            metroRootLayout.showHome();
+            return;
         }
+
+        // 2. If in Edit Mode on Home, exit Edit Mode
+        if (metroRootLayout.getChildCount() > 0 && metroRootLayout.getChildAt(0) instanceof org.dpdns.argv.metrolauncher.ui.MetroHomeView) {
+            org.dpdns.argv.metrolauncher.ui.MetroHomeView home = (org.dpdns.argv.metrolauncher.ui.MetroHomeView) metroRootLayout.getChildAt(0);
+            if (home.isEditMode()) {
+                home.setEditMode(false);
+                return;
+            }
+        }
+        
+        // Otherwise, do nothing (Launcher usually stays on Home)
     }
 
     private void updateUIState(LauncherState newState) {

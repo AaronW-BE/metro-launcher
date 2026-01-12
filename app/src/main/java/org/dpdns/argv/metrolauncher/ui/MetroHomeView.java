@@ -119,10 +119,33 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
         }
         adapter.setTiles(items);
 
-        TileChangeBus.register(this);
+        // Initialize Gesture Detector for blank area clicks
+        android.view.GestureDetector gestureDetector = new android.view.GestureDetector(context, new android.view.GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onSingleTapUp(MotionEvent e) {
+                return true;
+            }
+        });
 
-        // Tap empty area to exit edit mode
-        setOnClickListener(v -> setEditMode(false));
+        recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
+                // Only handle if in Edit Mode
+                if (!isEditMode) return false;
+
+                // Check if we hit a child
+                android.view.View child = rv.findChildViewUnder(e.getX(), e.getY());
+                
+                // If we didn't hit a child, and it's a confirmed tap
+                if (child == null && gestureDetector.onTouchEvent(e)) {
+                    setEditMode(false);
+                    return true; // Consume the event
+                }
+                return false;
+            }
+        });
+
+        TileChangeBus.register(this);
     }
 
     public void setEditMode(boolean editMode) {
@@ -168,8 +191,8 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
             final android.view.View child = recyclerView.getChildAt(i);
             
             // Calculate delay: further from bottom-right = more delay
-            // Using a factor for better "sweep" speed
-            long delay = (long) ((maxTop - child.getTop() + maxLeft - child.getLeft()) * 0.15f);
+            // Using a factor for better "sweep" speed - reduced for faster launch
+            long delay = (long) ((maxTop - child.getTop() + maxLeft - child.getLeft()) * 0.08f);
             if (delay > lastAnimationStartTime) lastAnimationStartTime = delay;
 
             child.setPivotX(child.getWidth());
@@ -182,12 +205,13 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
                 .scaleY(0.7f)
                 .alpha(0f)
                 .setStartDelay(delay)
-                .setDuration(400)
+                .setDuration(200)
                 .setInterpolator(new android.view.animation.AccelerateInterpolator())
                 .start();
         }
 
         // Call onComplete after a safe duration (max delay + animation duration)
+        // Reduced waiting buffer
         postDelayed(() -> {
             if (onComplete != null) onComplete.run();
             
@@ -200,8 +224,8 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
                     child.setScaleY(1.0f);
                     child.setAlpha(1.0f);
                 }
-            }, 500);
-        }, lastAnimationStartTime + 200); // 200ms overlap for better feel
+            }, 300);
+        }, lastAnimationStartTime + 50); // 50ms overlap for snappier launch
     }
 
     @Override

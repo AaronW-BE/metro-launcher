@@ -41,6 +41,16 @@ public class AppListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
         pinListener = l;
     }
 
+    public interface OnItemClickListener {
+        void onItemClick(AppInfo app);
+    }
+
+    private OnItemClickListener itemClickListener;
+
+    public void setOnItemClickListener(OnItemClickListener l) {
+        itemClickListener = l;
+    }
+
     private List<AppListItem> items = new ArrayList<>();
 
     public void submit(List<AppListItem> list) {
@@ -108,6 +118,12 @@ public class AppListAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder
             vh.itemView.setOnLongClickListener(v -> {
                 showPinMenu(v.getContext(), app);
                 return true;
+            });
+
+            vh.itemView.setOnClickListener(v -> {
+                if (itemClickListener != null) {
+                    itemClickListener.onItemClick(app);
+                }
             });
         }
     }

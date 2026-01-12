@@ -22,9 +22,53 @@ public class TileView extends FrameLayout {
         init();
     }
 
+    private android.view.GestureDetector gestureDetector;
+
     private void init() {
         setClickable(true);
         setFocusable(true);
+        
+        gestureDetector = new android.view.GestureDetector(getContext(), new android.view.GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDown(android.view.MotionEvent e) {
+                return true;
+            }
+
+            @Override
+            public void onLongPress(android.view.MotionEvent e) {
+                // 1. Enter Edit Mode
+                MetroHomeView hv = findHomeView();
+                if (hv != null) {
+                    hv.setEditMode(true);
+                }
+
+                // 2. Find ViewHolder and trigger Drag
+                android.view.ViewParent p = getParent();
+                androidx.recyclerview.widget.RecyclerView rv = null;
+                while (p != null) {
+                    if (p instanceof androidx.recyclerview.widget.RecyclerView) {
+                        rv = (androidx.recyclerview.widget.RecyclerView) p;
+                        break;
+                    }
+                    p = p.getParent();
+                }
+
+                if (rv != null) {
+                    androidx.recyclerview.widget.RecyclerView.ViewHolder holder = rv.getChildViewHolder(TileView.this);
+                    if (holder != null && hv != null) {
+                        // Reset global scale/rotation before drag starts
+                        animate().scaleX(1f).scaleY(1f).rotationX(0).rotationY(0).setDuration(50).start();
+                        hv.startDrag(holder);
+                    }
+                }
+            }
+
+            @Override
+            public boolean onSingleTapUp(android.view.MotionEvent e) {
+                performClick();
+                return true;
+            }
+        });
         
         int density = (int) getResources().getDisplayMetrics().density;
         int p = 8 * density;
@@ -107,6 +151,7 @@ public class TileView extends FrameLayout {
     }
 
     public void bind(final org.dpdns.argv.metrolauncher.model.TileItem item, boolean isEditMode) {
+        setItem(item);
         setBackgroundColor(item.color);
         
         unpinButton.setVisibility(isEditMode ? VISIBLE : GONE);
@@ -182,70 +227,105 @@ public class TileView extends FrameLayout {
                 iconView.setImageDrawable(null);
             }
         }
-
-        setOnLongClickListener(v -> {
-            // 1. Enter Edit Mode
-            MetroHomeView hv = findHomeView();
-            if (hv != null) {
-                hv.setEditMode(true);
-            }
-
-            // 2. Find ViewHolder and trigger Drag
-            android.view.ViewParent p = getParent();
-            androidx.recyclerview.widget.RecyclerView rv = null;
-            while (p != null) {
-                if (p instanceof androidx.recyclerview.widget.RecyclerView) {
-                    rv = (androidx.recyclerview.widget.RecyclerView) p;
-                    break;
-                }
-                p = p.getParent();
-            }
-
-            if (rv != null) {
-                androidx.recyclerview.widget.RecyclerView.ViewHolder holder = rv.getChildViewHolder(v);
-                if (holder != null && hv != null) {
-                    hv.startDrag(holder);
-                    return true;
-                }
-            }
-            return false;
-        });
-
-        setOnClickListener(v -> {
-            MetroHomeView hv = findHomeView();
-            if (hv != null && hv.isEditMode()) {
-                hv.setEditMode(false);
-                return;
-            }
-
-            // 1. Visual feedback on the tile itself
-            v.animate().scaleX(0.9f).scaleY(0.9f).setDuration(100).withEndAction(() -> {
-                v.animate().scaleX(1.0f).scaleY(1.0f).setDuration(100).start();
-                
-                // 2. Find MetroHomeView to perform the "Turn" exit animation
-                android.view.ViewParent parent = getParent();
-                while (parent != null && !(parent instanceof MetroHomeView)) {
-                    parent = parent.getParent();
-                }
-                
-                if (parent instanceof MetroHomeView && item.component != null) {
-                    final String pkgName = item.component.getPackageName();
-                    ((MetroHomeView) parent).performTurnExit(() -> {
-                        android.content.Intent intent = getContext().getPackageManager()
-                                .getLaunchIntentForPackage(pkgName);
-                        if (intent != null) {
-                            getContext().startActivity(intent);
-                        }
-                    });
-                } else if (item.component != null) {
-                    // Fallback if view hierarchy is different
-                    android.content.Intent intent = getContext().getPackageManager()
-                            .getLaunchIntentForPackage(item.component.getPackageName());
-                    if (intent != null) getContext().startActivity(intent);
-                }
-            }).start();
-        });
+        
+        // Remove default listeners as we handle them in onTouchEvent
+        setOnLongClickListener(null);
+        setOnClickListener(null);
     }
 
+    @Override
+    public boolean onTouchEvent(android.view.MotionEvent event) {
+        // Warning: GestureDetector onDown returns true, which means it consumes DOWN.
+        // We must call it first.
+        boolean handled = false;
+        if (gestureDetector != null) {
+            handled = gestureDetector.onTouchEvent(event);
+        }
+        
+        // If detector handled it (e.g. LongPress or Tap), we still want our tilt animation?
+        // Actually, if it's a LongPress, we probably want to stop the tilt or keep it?
+        // Let's allow the animation to run visually, but we must be careful not to
+        // double-consume or break the state machine.
+        
+        float x = event.getX();
+        float y = event.getY();
+        float cx = getWidth() / 2f;
+        float cy = getHeight() / 2f;
 
+        switch (event.getAction()) {
+            case android.view.MotionEvent.ACTION_DOWN:
+                // Calculate tilt
+                float dx = x - cx;
+                float dy = y - cy;
+                
+                // Max rotation degrees
+                float maxTilt = 10f;
+                
+                // Improve feel: scale down slightly
+                animate().scaleX(0.96f).scaleY(0.96f)
+                        .rotationY((dx / cx) * maxTilt)
+                        .rotationX(-(dy / cy) * maxTilt)
+                        .setDuration(150)
+                        .start();
+                // Return true to ensure we receive subsequent events
+                return true; 
+
+            case android.view.MotionEvent.ACTION_UP:
+                animate().scaleX(1f).scaleY(1f)
+                        .rotationX(0).rotationY(0)
+                        .setDuration(150)
+                        .start();
+                break;
+
+            case android.view.MotionEvent.ACTION_CANCEL:
+                animate().scaleX(1f).scaleY(1f)
+                        .rotationX(0).rotationY(0)
+                        .setDuration(150)
+                        .start();
+                break;
+        }
+
+        return handled || super.onTouchEvent(event);
+    }
+
+    @Override
+    public boolean performClick() {
+        super.performClick();
+        
+        MetroHomeView hv = findHomeView();
+        if (hv != null && hv.isEditMode()) {
+            hv.setEditMode(false);
+            return true;
+        }
+
+        if (this.mItem != null) {
+             android.view.ViewParent parent = getParent();
+             while (parent != null && !(parent instanceof MetroHomeView)) {
+                 parent = parent.getParent();
+             }
+
+             if (parent instanceof MetroHomeView && this.mItem.component != null) {
+                final String pkgName = this.mItem.component.getPackageName();
+                ((MetroHomeView) parent).performTurnExit(() -> {
+                    android.content.Intent intent = getContext().getPackageManager()
+                            .getLaunchIntentForPackage(pkgName);
+                    if (intent != null) {
+                        getContext().startActivity(intent);
+                    }
+                });
+            } else if (this.mItem.component != null) {
+                // Fallback
+                android.content.Intent intent = getContext().getPackageManager()
+                        .getLaunchIntentForPackage(this.mItem.component.getPackageName());
+                if (intent != null) getContext().startActivity(intent);
+            }
+        }
+        return true;
+    }
+
+    private org.dpdns.argv.metrolauncher.model.TileItem mItem;
+
+    private void setItem(org.dpdns.argv.metrolauncher.model.TileItem item) {
+        this.mItem = item;
+    }
 }

@@ -57,6 +57,15 @@ public class AppListView extends FrameLayout {
         adapter.setOnPinListener(app -> {
             pinToStart(app);
         });
+        
+        adapter.setOnItemClickListener(app -> {
+            if (app.componentName != null) {
+                Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(app.componentName.getPackageName());
+                if (intent != null) {
+                    getContext().startActivity(intent);
+                }
+            }
+        });
 
         recyclerView.setAdapter(adapter);
 

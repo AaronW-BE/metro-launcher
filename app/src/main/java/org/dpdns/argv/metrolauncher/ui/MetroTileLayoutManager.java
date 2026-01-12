@@ -59,7 +59,7 @@ public class MetroTileLayoutManager extends RecyclerView.LayoutManager {
 
         detachAndScrapAttachedViews(recycler);
         itemRects.clear();
-        verticalScrollOffset = 0;
+        // verticalScrollOffset = 0; // FIX: Do NOT reset scroll offset unconditionally!
 
         cellSize = getWidth() / columnCount;
 
@@ -103,6 +103,15 @@ public class MetroTileLayoutManager extends RecyclerView.LayoutManager {
         }
 
         totalHeight = maxRowUsed * cellSize;
+
+        // Clamp scroll offset to valid range
+        int maxScroll = Math.max(0, totalHeight - getHeight());
+        if (verticalScrollOffset > maxScroll) {
+            verticalScrollOffset = maxScroll;
+        }
+        if (verticalScrollOffset < 0) {
+            verticalScrollOffset = 0;
+        }
 
         fill(recycler, state);
     }
