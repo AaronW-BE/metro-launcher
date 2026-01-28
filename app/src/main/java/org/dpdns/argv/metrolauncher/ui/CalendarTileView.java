@@ -39,26 +39,33 @@ public class CalendarTileView extends LiveTileView {
 
     @Override
     protected View createFrontView() {
-        // Layout: Day of week (Mon) + Big Date (12)
-        LinearLayout layout = new LinearLayout(getContext());
-        layout.setOrientation(LinearLayout.VERTICAL);
-        layout.setGravity(Gravity.CENTER);
+        // Layout: RelativeLayout for free positioning
+        android.widget.RelativeLayout layout = new android.widget.RelativeLayout(getContext());
         layout.setBackgroundColor(0xFF00AFF0); // Metro Blue
         layout.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT));
+        layout.setPadding(24, 16, 24, 16);
         
         dayText = new TextView(getContext());
+        dayText.setId(View.generateViewId());
         dayText.setTextColor(Color.WHITE);
-        dayText.setTextSize(18);
-        dayText.setGravity(Gravity.CENTER_HORIZONTAL);
+        dayText.setTextSize(14); // Smaller, top-left
+        dayText.setTypeface(null, android.graphics.Typeface.BOLD);
+        
+        android.widget.RelativeLayout.LayoutParams dayParams = new android.widget.RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dayParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_TOP);
+        dayParams.addRule(android.widget.RelativeLayout.ALIGN_PARENT_LEFT);
+        layout.addView(dayText, dayParams);
         
         dateText = new TextView(getContext());
         dateText.setTextColor(Color.WHITE);
-        dateText.setTextSize(48);
-        dateText.setGravity(Gravity.CENTER_HORIZONTAL);
-        dateText.setTypeface(null, android.graphics.Typeface.BOLD);
+        dateText.setTextSize(54); // Reduced from 72 to 54
+        dateText.setTypeface(null, android.graphics.Typeface.NORMAL); // Metro style usually light or normal for big numbers
         
-        layout.addView(dayText);
-        layout.addView(dateText);
+        android.widget.RelativeLayout.LayoutParams dateParams = new android.widget.RelativeLayout.LayoutParams(
+                ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        dateParams.addRule(android.widget.RelativeLayout.CENTER_IN_PARENT);
+        layout.addView(dateText, dateParams);
         
         updateDate();
         return layout;

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">磁贴启动器</string>
+    <string name="settings">设置</string>
+    <string name="general">常规</string>
+    <string name="language">语言</string>
+    <string name="lang_auto">跟随系统</string>
+    <string name="lang_en">English</string>
+    <string name="lang_zh">简体中文</string>
+    <string name="lang_hk">繁體中文</string>
+    <string name="pin_to_start">固定到开始屏幕</string>
+    <string name="lock_layout">锁定布局</string>
+    <string name="set_default_launcher_title">设为默认桌面</string>
+    <string name="set_default_launcher_message">将磁贴启动器设为您的默认桌面？</string>
+    <string name="yes">是</string>
+    <string name="no">否</string>
+</resources>

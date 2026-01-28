@@ -71,12 +71,12 @@ public class ClockTileView extends LiveTileView {
 
         TextView dayText = new TextView(getContext());
         dayText.setTextColor(Color.WHITE);
-        dayText.setTextSize(18);
+        dayText.setTextSize(16);
         dayText.setText(new SimpleDateFormat("EEEE", Locale.getDefault()).format(new Date()));
 
         TextView dateText = new TextView(getContext());
         dateText.setTextColor(Color.WHITE);
-        dateText.setTextSize(24);
+        dateText.setTextSize(20);
         dateText.setText(new SimpleDateFormat("MMMM d", Locale.getDefault()).format(new Date()));
 
         layout.addView(dayText);

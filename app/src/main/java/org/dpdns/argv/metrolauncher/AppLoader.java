@@ -28,6 +28,11 @@ public class AppLoader {
         List<AppInfo> appInfos = new ArrayList<>();
 
         for (ResolveInfo ri : apps) {
+            // Hide own app icon (we inject Settings manually)
+            if (ri.activityInfo.packageName.equals(context.getPackageName())) {
+                continue;
+            }
+
             AppInfo app = new AppInfo();
             app.name = ri.loadLabel(pm).toString();
             app.icon = ri.loadIcon(pm);
@@ -38,6 +43,22 @@ public class AppLoader {
             );
             appInfos.add(app);
         }
+
+        // Inject Settings
+        AppInfo settings = new AppInfo();
+        String appName = context.getString(R.string.app_name);
+        String settingsName = context.getString(R.string.settings);
+        settings.name = appName + " " + settingsName;
+        
+        try {
+            settings.icon = context.getPackageManager().getApplicationIcon(context.getPackageName());
+        } catch (PackageManager.NameNotFoundException e) {
+             settings.icon = androidx.core.content.ContextCompat.getDrawable(context, R.drawable.ic_settings);
+        }
+        
+        settings.packageName = context.getPackageName();
+        settings.componentName = new android.content.ComponentName(context, org.dpdns.argv.metrolauncher.activities.SettingsActivity.class);
+        appInfos.add(settings);
 
         appInfos.sort((a, b) ->
                 a.name.compareToIgnoreCase(b.name));

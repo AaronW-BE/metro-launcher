@@ -60,9 +60,17 @@ public class AppListView extends FrameLayout {
         
         adapter.setOnItemClickListener(app -> {
             if (app.componentName != null) {
-                Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(app.componentName.getPackageName());
-                if (intent != null) {
+                if (getContext().getPackageName().equals(app.packageName)) {
+                    // Internal App/Settings
+                    Intent intent = new Intent();
+                    intent.setComponent(app.componentName);
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
                     getContext().startActivity(intent);
+                } else {
+                    Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(app.componentName.getPackageName());
+                    if (intent != null) {
+                        getContext().startActivity(intent);
+                    }
                 }
             }
         });
@@ -105,7 +113,13 @@ public class AppListView extends FrameLayout {
             if (item.type == AppListItem.TYPE_HEADER
                     && item.letter.equals(letter)) {
 
-                recyclerView.scrollToPosition(i);
+                // recyclerView.scrollToPosition(i);
+                RecyclerView.LayoutManager lm = recyclerView.getLayoutManager();
+                if (lm instanceof LinearLayoutManager) {
+                    ((LinearLayoutManager) lm).scrollToPositionWithOffset(i, 0);
+                } else {
+                    recyclerView.scrollToPosition(i);
+                }
                 return;
             }
         }

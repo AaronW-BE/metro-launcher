@@ -29,6 +29,11 @@ public class MainActivity extends AppCompatActivity {
     private org.dpdns.argv.metrolauncher.ui.MetroRootLayout metroRootLayout;
 
     @Override
+    protected void attachBaseContext(android.content.Context newBase) {
+        super.attachBaseContext(org.dpdns.argv.metrolauncher.util.LanguageManager.attachBaseContext(newBase));
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         EdgeToEdge.enable(this);
@@ -128,6 +133,26 @@ public class MainActivity extends AppCompatActivity {
         
         if (!needed.isEmpty()) {
             androidx.core.app.ActivityCompat.requestPermissions(this, needed.toArray(new String[0]), 100);
+        }
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
+        checkDefaultLauncher();
+    }
+    
+    private void checkDefaultLauncher() {
+        if (!org.dpdns.argv.metrolauncher.util.LauncherHelper.isDefaultLauncher(this)) {
+            // Check if we already asked this session or user declined (omitted for now to be aggressive/standard)
+             new androidx.appcompat.app.AlertDialog.Builder(this)
+                .setTitle(R.string.set_default_launcher_title)
+                .setMessage(R.string.set_default_launcher_message)
+                .setPositiveButton(R.string.yes, (d, w) -> {
+                    org.dpdns.argv.metrolauncher.util.LauncherHelper.requestSetDefaultLauncher(this);
+                })
+                .setNegativeButton(R.string.no, null)
+                .show();
         }
     }
 

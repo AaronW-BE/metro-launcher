@@ -4,11 +4,13 @@ import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
+import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.recyclerview.widget.RecyclerView;
 
+import org.dpdns.argv.metrolauncher.R;
 import org.dpdns.argv.metrolauncher.TileChangeBus;
 import org.dpdns.argv.metrolauncher.model.OnTilesChangedListener;
 import org.dpdns.argv.metrolauncher.model.PinnedTile;
@@ -125,27 +127,78 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
             public boolean onSingleTapUp(MotionEvent e) {
                 return true;
             }
+
+            @Override
+            public void onLongPress(MotionEvent e) {
+                if (org.dpdns.argv.metrolauncher.util.PreferenceManager.isLayoutLocked(context)) {
+                    Toast.makeText(context, R.string.lock_layout, Toast.LENGTH_SHORT).show();
+                    return;
+                }
+                setEditMode(true);
+            }
         });
 
         recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(@NonNull RecyclerView rv, @NonNull MotionEvent e) {
-                // Only handle if in Edit Mode
-                if (!isEditMode) return false;
-
+                // If in edit mode, logic is different (tap blank to exit)
+                // If NOT in edit mode, we want to detect long press on blank
+                
                 // Check if we hit a child
                 android.view.View child = rv.findChildViewUnder(e.getX(), e.getY());
                 
-                // If we didn't hit a child, and it's a confirmed tap
-                if (child == null && gestureDetector.onTouchEvent(e)) {
-                    setEditMode(false);
-                    return true; // Consume the event
+                if (isEditMode) {
+                    // If we didn't hit a child, and it's a confirmed tap
+                    if (child == null && gestureDetector.onTouchEvent(e)) {
+                        setEditMode(false);
+                        return true; // Consume the event
+                    }
+                    return false;
+                } else {
+                    // Not in edit mode
+                    if (child == null) {
+                        // Pass to gesture detector to check for LongPress
+                        gestureDetector.onTouchEvent(e);
+                    }
+                    return false; // Always pass through so RecyclerView can scroll
                 }
-                return false;
             }
         });
 
         TileChangeBus.register(this);
+        
+        setupSettingsButton(context);
+    }
+    
+    private android.widget.ImageView settingsButton;
+    
+    private void setupSettingsButton(Context context) {
+        settingsButton = new android.widget.ImageView(context);
+        settingsButton.setImageDrawable(androidx.core.content.ContextCompat.getDrawable(context, org.dpdns.argv.metrolauncher.R.drawable.ic_settings));
+        
+        // Circular background for better visibility
+        android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();
+        bg.setShape(android.graphics.drawable.GradientDrawable.OVAL);
+        bg.setColor(0xFF222222); // Dark background
+        bg.setStroke(2, 0xFFFFFFFF); // White border
+        settingsButton.setBackground(bg);
+        
+        int size = (int) (48 * getResources().getDisplayMetrics().density);
+        int margin = (int) (24 * getResources().getDisplayMetrics().density);
+        
+        FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(size, size);
+        params.gravity = android.view.Gravity.BOTTOM | android.view.Gravity.RIGHT;
+        params.setMargins(0, 0, margin, margin);
+        
+        settingsButton.setPadding(size / 4, size / 4, size / 4, size / 4);
+        settingsButton.setLayoutParams(params);
+        settingsButton.setVisibility(GONE);
+        settingsButton.setOnClickListener(v -> {
+            setEditMode(false);
+            context.startActivity(new android.content.Intent(context, org.dpdns.argv.metrolauncher.activities.SettingsActivity.class));
+        });
+        
+        addView(settingsButton);
     }
 
     public void setEditMode(boolean editMode) {
@@ -153,6 +206,14 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
         this.isEditMode = editMode;
         if (adapter != null) {
             adapter.setEditMode(editMode);
+        }
+        
+        if (settingsButton != null) {
+             settingsButton.setVisibility(editMode ? VISIBLE : GONE);
+             if (editMode) {
+                 settingsButton.setAlpha(0f);
+                 settingsButton.animate().alpha(1f).setDuration(200).start();
+             }
         }
     }
 

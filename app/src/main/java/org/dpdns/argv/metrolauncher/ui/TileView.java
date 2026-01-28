@@ -36,6 +36,11 @@ public class TileView extends FrameLayout {
 
             @Override
             public void onLongPress(android.view.MotionEvent e) {
+                if (org.dpdns.argv.metrolauncher.util.PreferenceManager.isLayoutLocked(getContext())) {
+                    android.widget.Toast.makeText(getContext(), org.dpdns.argv.metrolauncher.R.string.lock_layout, android.widget.Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
                 // 1. Enter Edit Mode
                 MetroHomeView hv = findHomeView();
                 if (hv != null) {
