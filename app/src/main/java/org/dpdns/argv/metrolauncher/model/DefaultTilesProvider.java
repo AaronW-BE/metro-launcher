@@ -20,7 +20,15 @@ public class DefaultTilesProvider {
         PackageManager pm = context.getPackageManager();
         Set<String> addedPackages = new HashSet<>();
 
-        // 0. Phone / Dialer (Priority) - Size 2x2
+        // 1. Time / Clock - 2x2
+        addSystemApp(context, results, addedPackages, new String[]{"clock", "alarm", "deskclock"}, 2, 2);
+
+        // 2. Calendar - 2x2
+        addSystemApp(context, results, addedPackages, new String[]{"calendar", "agenda"}, 2, 2);
+
+        // 3. Four 1x1 Tiles: Phone, Contacts, Camera, Browser
+        
+        // (1) Phone - 1x1
         String defaultDialer = null;
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
             android.telecom.TelecomManager tm = (android.telecom.TelecomManager) context.getSystemService(Context.TELECOM_SERVICE);
@@ -29,22 +37,33 @@ public class DefaultTilesProvider {
             }
         }
         if (defaultDialer != null && !defaultDialer.isEmpty()) {
-            addAppByPackage(context, results, addedPackages, defaultDialer, 2, 2);
+            addAppByPackage(context, results, addedPackages, defaultDialer, 1, 1);
         }
-        // Fallback for Phone
-        addSystemApp(context, results, addedPackages, new String[]{"dialer", "phone"}, 2, 2);
+        addSystemApp(context, results, addedPackages, new String[]{"dialer", "phone"}, 1, 1);
 
-        // 1. Mandatory Default Tiles
-        // Contacts / People - Size 2x2 (Matches Phone usually, or 1x1. User asked for "Contacts App tile", typically next to phone)
-        // Let's make it 2x2 based on Metro aesthetic, or 1x1. User didn't specify. I'll do 1x1 default.
+        // (2) Contacts - 1x1
         addSystemApp(context, results, addedPackages, new String[]{"contacts", "people", "addressbook"}, 1, 1);
+        
+        // (3) Camera - 1x1
+        addSystemApp(context, results, addedPackages, new String[]{"camera", "cam", "android.camera"}, 1, 1);
 
-        // Clock, Calendar, Photos
-        addSystemApp(context, results, addedPackages, new String[]{"clock", "alarm", "deskclock"}, 2, 2); // Clock usually wide or medium
-        addSystemApp(context, results, addedPackages, new String[]{"calendar", "agenda"}, 2, 2); // User requested 2x2
-        addSystemApp(context, results, addedPackages, new String[]{"gallery", "photos", "image"}, 4, 2); // Photos usually wide
+        // (4) Browser - 1x1
+        String defaultBrowser = null;
+        Intent browserIntent = new Intent(Intent.ACTION_VIEW, android.net.Uri.parse("http://www.google.com"));
+        ResolveInfo browserInfo = pm.resolveActivity(browserIntent, PackageManager.MATCH_DEFAULT_ONLY);
+        if (browserInfo != null && browserInfo.activityInfo != null) {
+            defaultBrowser = browserInfo.activityInfo.packageName;
+            if (!"android".equals(defaultBrowser)) {
+                addAppByPackage(context, results, addedPackages, defaultBrowser, 1, 1);
+            }
+        }
+        addSystemApp(context, results, addedPackages, new String[]{"browser", "chrome", "firefox", "edge"}, 1, 1);
 
-        // 2. High Frequency Apps (Top 10)
+
+        // 4. Photos - 4x2 (Wide)
+        addSystemApp(context, results, addedPackages, new String[]{"gallery", "photos", "image"}, 4, 2); 
+
+        // 5. High Frequency Apps (Top 10)
         List<String> topApps = UsageHelper.getTopUsedApps(context, 10);
         for (String pkg : topApps) {
             addAppByPackage(context, results, addedPackages, pkg, 0, 0); // 0 means default
