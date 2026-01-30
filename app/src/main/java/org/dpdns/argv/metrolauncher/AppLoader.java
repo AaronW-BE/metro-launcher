@@ -60,15 +60,39 @@ public class AppLoader {
         settings.componentName = new android.content.ComponentName(context, org.dpdns.argv.metrolauncher.activities.SettingsActivity.class);
         appInfos.add(settings);
 
-        appInfos.sort((a, b) ->
-                a.name.compareToIgnoreCase(b.name));
+        // Sort using Chinese Locale Collator (Handles Pinyin for Chinese, and standard A-Z for English)
+        final java.text.Collator collator = java.text.Collator.getInstance(java.util.Locale.CHINA);
+        // Use AlphabeticIndex for sectioning and primary sort key
+        final android.icu.text.AlphabeticIndex.ImmutableIndex index = 
+                new android.icu.text.AlphabeticIndex(java.util.Locale.CHINA).buildImmutableIndex();
+
+        appInfos.sort((a, b) -> {
+            // 1. Compare Alphabetic Buckets (Group by A, B, C...)
+            int bucketA = index.getBucketIndex(a.name);
+            int bucketB = index.getBucketIndex(b.name);
+            
+            if (bucketA != bucketB) {
+                return Integer.compare(bucketA, bucketB);
+            }
+            
+            // 2. Same Bucket: Prioritize English (Latin) over Chinese
+            boolean isLatinA = isLatin(a.name);
+            boolean isLatinB = isLatin(b.name);
+            
+            if (isLatinA && !isLatinB) return -1;
+            if (!isLatinA && isLatinB) return 1;
+            
+            // 3. Same Type: Standard Collator Compare
+            return collator.compare(a.name, b.name);
+        });
 
         List<AppListItem> result = new ArrayList<>();
 
         String lastLetter = null;
 
         for (AppInfo app : appInfos) {
-            String letter = app.name.substring(0, 1).toUpperCase();
+            int bucketIndex = index.getBucketIndex(app.name);
+            String letter = index.getBucket(bucketIndex).getLabel();
 
             if (!letter.equals(lastLetter)) {
                 lastLetter = letter;
@@ -79,5 +103,11 @@ public class AppLoader {
         }
 
         return result;
+    }
+    
+    private static boolean isLatin(String s) {
+        if (s == null || s.isEmpty()) return false;
+        char c = s.charAt(0);
+        return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
     }
 }
