@@ -14,4 +14,10 @@
     <string name="set_default_launcher_message">将磁贴启动器设为您的默认桌面？</string>
     <string name="yes">是</string>
     <string name="no">否</string>
+    <string name="permissions">权限管理</string>
+    <string name="perm_usage_access">使用情况访问权限 (常用应用)</string>
+    <string name="perm_calendar">日历权限 (动态磁贴)</string>
+    <string name="perm_media">照片/存储权限 (动态磁贴)</string>
+    <string name="perm_status_granted">已授权</string>
+    <string name="perm_status_denied">未授权 - 点击授权</string>
 </resources>

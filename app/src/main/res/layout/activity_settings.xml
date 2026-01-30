@@ -79,4 +79,31 @@
             
     </LinearLayout>
 
+    <LinearLayout
+        android:id="@+id/btnPermissions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="12dp"
+        android:background="?android:attr/selectableItemBackground"
+        android:clickable="true"
+        android:focusable="true">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/permissions"
+            android:textColor="@android:color/white"
+            android:textSize="20sp"/>
+
+        <TextView
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:text="@string/general"
+             android:textColor="@android:color/darker_gray"
+             android:textSize="14sp"
+             android:layout_marginTop="4dp"
+             android:visibility="gone"/>
+    </LinearLayout>
+
 </LinearLayout>

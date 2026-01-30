@@ -13,4 +13,10 @@
     <string name="set_default_launcher_message">Use Metro Launcher as your home screen?</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
+    <string name="permissions">Permissions</string>
+    <string name="perm_usage_access">Usage Access (Top Apps)</string>
+    <string name="perm_calendar">Calendar (Live Tile)</string>
+    <string name="perm_media">Photos / Storage (Live Tile)</string>
+    <string name="perm_status_granted">Granted</string>
+    <string name="perm_status_denied">Denied - Tap to Grant</string>
 </resources>

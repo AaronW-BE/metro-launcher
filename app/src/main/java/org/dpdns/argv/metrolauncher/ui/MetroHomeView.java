@@ -175,6 +175,7 @@ public class MetroHomeView extends FrameLayout implements OnTilesChangedListener
     private void setupSettingsButton(Context context) {
         settingsButton = new android.widget.ImageView(context);
         settingsButton.setImageDrawable(androidx.core.content.ContextCompat.getDrawable(context, org.dpdns.argv.metrolauncher.R.drawable.ic_settings));
+        settingsButton.setImageTintList(android.content.res.ColorStateList.valueOf(android.graphics.Color.WHITE));
         
         // Circular background for better visibility
         android.graphics.drawable.GradientDrawable bg = new android.graphics.drawable.GradientDrawable();

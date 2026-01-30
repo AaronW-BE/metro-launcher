@@ -45,6 +45,8 @@ public class LanguageSettingsActivity extends AppCompatActivity {
 
         listContainer = findViewById(R.id.language_list_container);
         setupLanguageList();
+        
+        findViewById(R.id.btnBack).setOnClickListener(v -> finish());
     }
 
     private void setupLanguageList() {

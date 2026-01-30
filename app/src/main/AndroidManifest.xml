@@ -50,6 +50,11 @@
             android:exported="false"
             android:label="@string/language"
             android:theme="@style/Theme.AppCompat.NoActionBar" />
+        <activity
+            android:name=".activities.PermissionsActivity"
+            android:exported="false"
+            android:label="@string/permissions"
+            android:theme="@style/Theme.AppCompat.NoActionBar" />
     </application>
 
 </manifest>

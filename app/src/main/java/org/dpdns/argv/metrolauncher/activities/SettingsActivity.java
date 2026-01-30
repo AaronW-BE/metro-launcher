@@ -60,7 +60,17 @@ public class SettingsActivity extends AppCompatActivity {
              org.dpdns.argv.metrolauncher.util.PreferenceManager.setLayoutLocked(this, isChecked);
         });
 
+        // Permissions
+        findViewById(R.id.btnPermissions).setOnClickListener(v -> {
+            startActivity(new Intent(this, PermissionsActivity.class));
+        });
+
         updateLanguageText();
+    }
+    
+    @Override
+    protected void onResume() {
+        super.onResume();
     }
 
     private void updateLanguageText() {

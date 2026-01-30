@@ -14,4 +14,10 @@
     <string name="set_default_launcher_message">將磁貼啟動器設為您的預設桌面？</string>
     <string name="yes">是</string>
     <string name="no">否</string>
+    <string name="permissions">權限管理</string>
+    <string name="perm_usage_access">使用情形存取權限 (常用應用)</string>
+    <string name="perm_calendar">行事曆權限 (動態磚)</string>
+    <string name="perm_media">照片/儲存權限 (動態磚)</string>
+    <string name="perm_status_granted">已授權</string>
+    <string name="perm_status_denied">未授權 - 點擊授權</string>
 </resources>
