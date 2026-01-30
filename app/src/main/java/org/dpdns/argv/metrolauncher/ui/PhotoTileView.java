@@ -145,6 +145,7 @@ public class PhotoTileView extends LiveTileView {
 
         if (!hasImages && !hasPartial && !hasLegacy) {
             Log.d("PhotoTileView", "Missing storage permissions");
+            showPermissionPrompt();
             return;
         }
 
@@ -203,6 +204,25 @@ public class PhotoTileView extends LiveTileView {
             displayItem(frontImage, frontDate, item);
         } else if (nextView == backContainer) {
             displayItem(backImage, backDate, item);
+        }
+    }
+
+    private void showPermissionPrompt() {
+        if (titleView != null) {
+            titleView.setText("Tap to Allow Photos");
+            titleView.setVisibility(VISIBLE);
+        }
+        setOnClickListener(v -> requestPermission());
+    }
+
+    private void requestPermission() {
+        if (getContext() instanceof android.app.Activity) {
+            android.app.Activity activity = (android.app.Activity) getContext();
+            String perm = Manifest.permission.READ_EXTERNAL_STORAGE;
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                perm = Manifest.permission.READ_MEDIA_IMAGES;
+            }
+            androidx.core.app.ActivityCompat.requestPermissions(activity, new String[]{perm}, 1001);
         }
     }
 
